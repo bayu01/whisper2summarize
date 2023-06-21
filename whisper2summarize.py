@@ -2,6 +2,7 @@ import os
 import torch  
 import whisper 
 import openai
+import time
 import tqdm
 import sys, argparse
 from dotenv import load_dotenv
@@ -51,6 +52,7 @@ def gpt_process(transcript):
         )
         previous = gpt_response['choices'][0]['message']['content']
         summary += gpt_response['choices'][0]['message']['content']
+        time.sleep(5)  # Sleep for 5 seconds to prevent "openai.error.RateLimitError: The server had an error while processing your request."
 
     with open("Summary.txt", "w",encoding='utf-8') as text_file:
         text_file.write(summary)
@@ -62,10 +64,16 @@ def gpt_process(transcript):
 parser = argparse.ArgumentParser(description='Whisper2Summarize - a tool for summarizing audio files')
 parser.add_argument('audio', type=str, help='the audio file to summarize')
 parser.add_argument('--model', type=str, default='base', help='the summarization model to use (default: base)')
+parser.add_argument('--file', type=str, default='', help='the output file')
 
 # parse the arguments
 args = parser.parse_args()
 audio = args.audio
 model_type = args.model
-text = transcribe(audio,model_type)
+file_path = args.file
+if file_path:
+    with open(file_path, "r") as file:
+        text = file.read()  
+else:
+    text = transcribe(audio,model_type)
 gpt_process(text)
